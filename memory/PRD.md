@@ -77,6 +77,23 @@ Frontend:
 Notes: old messages without `readBy` simply show as Sent. Repo has pre-existing clean-install
 peer-dep gaps (`emoji-mart`, `stylis`) unrelated to this work.
 
+## Code-review fixes (2026-06-06)
+Applied SAFE subset (verified: lint clean + production build compiles):
+- `dashboard/index.js`: fixed data-fetch useEffect deps (added dispatch/user.token, removed
+  its eslint-disable). Socket-listener effect keeps its eslint-disable INTENTIONALLY +
+  documented why (adding `socket` to deps would register duplicate listeners → duplicate
+  messages / double read-receipt dispatches).
+- `Shortcuts.js`: array-index key -> stable `${key}-${e}`.
+- `socialLoginHelpers.js`: removed console.log leaking OAuth params.
+- `actionClickHandler.js`: removed placeholder debug console.logs (control flow preserved).
+DEFERRED (pre-existing template code; risky/architectural — do as separate tested tasks):
+- Auth token localStorage -> httpOnly cookies (major auth re-architecture; needs integration
+  review + breaks socket query-token auth if done naively).
+- ~17 console.error in catch blocks -> replace with a logging service (Sentry), not blind delete.
+- Complexity/oversized component refactors (UserCard, AllChatElement, ChatsList, ContactList,
+  Sidebar, NoChat) -> cosmetic maintainability, real regression risk, zero functional change.
+- TextAnimate index key (static text, fine); useLocalStorage deps (already correct).
+
 ## Backlog / Future (P1/P2)
 - P1: One-time migration script to encrypt existing plaintext messages (user chose "new only").
 - P2: Encrypt media/file metadata or filenames if sensitive.

@@ -14,7 +14,6 @@ export const getOAuthCode = (url) => {
           const urlParams = new URLSearchParams(popup.location.search);
           const code = urlParams.get("code");
           if (code) {
-            console.log(urlParams);
             popup.close();
             clearInterval(checkPopupClosed);
             resolve(code);

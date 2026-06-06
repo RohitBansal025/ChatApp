@@ -3,7 +3,7 @@ import { ShowSnackbar } from "../../redux/slices/userSlice";
 const actionHandler = (type, dispatch) => {
   switch (type) {
     case "gaming":
-      return console.log("gaming click");
+      return null;
 
     // handling photo click
     case "photo":
@@ -25,7 +25,6 @@ const actionHandler = (type, dispatch) => {
         const selectedFiles = Array.from(e.target.files);
 
         selectedFiles.forEach((img) => {
-          console.log("image types: ", img.type);
           if (!acceptedFileTypes.includes(img.type)) {
             dispatch(
               ShowSnackbar({
@@ -35,16 +34,14 @@ const actionHandler = (type, dispatch) => {
             );
           }
         });
-
-        // console.log(selectedFiles);
       });
       break;
 
     case "document":
-      return console.log("doc click");
+      return null;
 
     case "contact":
-      return console.log("contact click");
+      return null;
 
     default:
       break;

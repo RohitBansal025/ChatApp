@@ -123,10 +123,10 @@ const Shortcuts = ({ open, handleClose, theme }) => {
                   {title}
                 </Typography>
                 <Stack direction={"row"} spacing={2}>
-                  {combination.map((e, index) => {
+                  {combination.map((e) => {
                     return (
                       <Button
-                        key={index}
+                        key={`${key}-${e}`}
                         sx={{
                           p: 0.2,
                           color:

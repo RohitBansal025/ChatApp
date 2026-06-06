@@ -34,8 +34,7 @@ const DashboardLayout = () => {
       // get online friends
       dispatch(GetOnlineFriends());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user._id]);
+  }, [user._id, user.token, dispatch]);
 
   useEffect(() => {
     // start server
@@ -104,6 +103,10 @@ const DashboardLayout = () => {
         }
       };
     }
+    // NOTE: deps are intentionally limited to the user's identity. The `socket`
+    // binding and the (stable) action creators are deliberately excluded —
+    // re-running this effect on socket identity changes would register duplicate
+    // listeners (duplicate messages / double-dispatched events).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user._id, user.token]);
 
