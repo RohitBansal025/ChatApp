@@ -52,7 +52,12 @@ const unexpectedErrorHandler = (error) => {
 };
 
 process.on("uncaughtException", unexpectedErrorHandler);
-process.on("unhandledRejection", unexpectedErrorHandler);
+
+// Log unhandled promise rejections instead of crashing the whole server,
+// so a single failed async operation can't take the app down.
+process.on("unhandledRejection", (reason) => {
+  console.log("Unhandled Promise Rejection:", reason);
+});
 
 // SIGTERM Handling - (works for deployed linux based server)
 process.on("SIGTERM", () => {

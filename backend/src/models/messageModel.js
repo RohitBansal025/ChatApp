@@ -26,6 +26,9 @@ const messageSchema = mongoose.Schema(
   }
 );
 
+// Speeds up fetching & sorting messages within a conversation.
+messageSchema.index({ conversation: 1, createdAt: 1 });
+
 // creating model for schema
 const MessageModel = mongoose.model("Message", messageSchema);
 

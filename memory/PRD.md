@@ -42,6 +42,20 @@ while the DB copy is encrypted.
 Generate with: `openssl rand -base64 48`. Keep it STABLE and SECRET — changing it makes
 previously encrypted messages unreadable.
 
+## What's Implemented (2026-06-06 — robustness/features bundle)
+Backend-only, low-risk improvements (no frontend changes). All verified with tests
+(then removed) + clean server boot:
+- Message validation (`src/utils/messageValidation.js`): rejects empty/whitespace-only
+  messages, caps length at 10000 chars. Wired into both HTTP `sendMessage` and
+  `socketSendMessage` in `messageController.js`.
+- Socket rate-limiting (`src/utils/socketRateLimiter.js`): in-memory sliding window.
+  Applied in `socket.js` -> 25 msgs/10s per user on `send_message`; 60/10s on typing.
+- DB index `messageModel.js`: `{ conversation: 1, createdAt: 1 }` for faster convo loads.
+- Safer error handling `server.js`: `unhandledRejection` now logs instead of killing
+  the whole server (uncaughtException still exits, standard practice).
+- Decided to SKIP file-attachment encryption: the `files` array is always empty in this
+  app (no in-chat attachments wired; uploads are avatar-only), so it was unused scope.
+
 ## Backlog / Future (P1/P2)
 - P1: One-time migration script to encrypt existing plaintext messages (user chose "new only").
 - P2: Encrypt media/file metadata or filenames if sensitive.

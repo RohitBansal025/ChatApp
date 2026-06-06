@@ -6,6 +6,7 @@ import {
   updateLatestMessage,
   validateFriendship,
 } from "../services/messageService.js";
+import { validateMessageContent } from "../utils/messageValidation.js";
 import { ConversationModel } from "../models/index.js";
 
 // -------------------------- Send Message --------------------------
@@ -14,9 +15,12 @@ export const sendMessage = async (req, res, next) => {
     const user_id = req.user._id;
     const { message, convo_id, files } = req.body;
 
-    if (!convo_id || (!message && !files)) {
-      throw createHttpError.BadRequest("Invalid conversation id or message");
+    if (!convo_id) {
+      throw createHttpError.BadRequest("Invalid conversation id");
     }
+
+    // validate + sanitize message content (empty / length checks)
+    const cleanMessage = validateMessageContent(message, files);
 
     const convo_exists = await ConversationModel.findById({ _id: convo_id });
 
@@ -37,7 +41,7 @@ export const sendMessage = async (req, res, next) => {
 
     const msgData = {
       sender: user_id,
-      message,
+      message: cleanMessage,
       conversation: convo_id,
       files: files || [],
     };
@@ -80,9 +84,12 @@ export const socketSendMessage = async (socket, user_id, messageData) => {
 
     const convo_id = conversation._id;
 
-    if (!convo_id || (!message && !files)) {
-      throw createHttpError.BadRequest("Invalid conversation id or message");
+    if (!convo_id) {
+      throw createHttpError.BadRequest("Invalid conversation id");
     }
+
+    // validate + sanitize message content (empty / length checks)
+    const cleanMessage = validateMessageContent(message, files);
 
     const convo_exists = await ConversationModel.findById({ _id: convo_id });
 
@@ -104,7 +111,7 @@ export const socketSendMessage = async (socket, user_id, messageData) => {
     const msgData = {
       _id: _id,
       sender: user_id,
-      message,
+      message: cleanMessage,
       conversation: convo_id,
       files: files || [],
     };

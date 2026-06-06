@@ -5,6 +5,7 @@ import { socketMiddleware } from "./src/middlewares/socketMiddleware.js";
 import { emitFriendStatus } from "./src/controllers/friendsController.js";
 import { joinConvo } from "./src/controllers/conversationController.js";
 import { socketSendMessage } from "./src/controllers/messageController.js";
+import { isRateLimited } from "./src/utils/socketRateLimiter.js";
 
 export const initializeSocket = (server) => {
   // creating socket.io instence
@@ -60,6 +61,13 @@ export const initializeSocket = (server) => {
     // ---------------Send Message Hanling---------------
     socket.on("send_message", (message) => {
       try {
+        // throttle: max 25 messages / 10s per user to prevent spam/flooding
+        if (isRateLimited(`msg:${user_id}`, 25, 10000)) {
+          return socket.errorHandler(
+            "You're sending messages too quickly. Please slow down."
+          );
+        }
+
         const conversation = message.conversation;
 
         if (!conversation.users) return;
@@ -91,6 +99,9 @@ export const initializeSocket = (server) => {
     // ---------------Typing Message Hanling---------------
     socket.on("start_typing", (conversation_id) => {
       try {
+        // lenient throttle so typing events can't be used to flood the room
+        if (isRateLimited(`type:${user_id}`, 60, 10000)) return;
+
         socket.in(conversation_id).emit("start_typing", {
           typing: true,
           conversation_id: conversation_id,
@@ -101,6 +112,8 @@ export const initializeSocket = (server) => {
     });
     socket.on("stop_typing", (conversation_id) => {
       try {
+        if (isRateLimited(`type:${user_id}`, 60, 10000)) return;
+
         socket.in(conversation_id).emit("stop_typing", {
           typing: false,
           conversation_id: conversation_id,
