@@ -86,6 +86,21 @@ const slice = createSlice({
         });
       }
     },
+
+    // mark messages as seen by a reader (read receipts)
+    updateMessagesSeen: (state, action) => {
+      const { conversation_id, reader_id } = action.payload;
+
+      if (state.activeConversation?._id !== conversation_id) return;
+
+      state.messages = state.messages.map((m) => {
+        const readBy = m.readBy || [];
+        if (!readBy.includes(reader_id)) {
+          return { ...m, readBy: [...readBy, reader_id] };
+        }
+        return m;
+      });
+    },
   },
   extraReducers(builder) {
     builder
@@ -180,6 +195,7 @@ export const {
   closeActiveConversation,
   updateMsgConvo,
   updateTypingConvo,
+  updateMessagesSeen,
   // --------- Optimistic Approach ---------
   setIsOptimistic,
   // ---------------------------------------

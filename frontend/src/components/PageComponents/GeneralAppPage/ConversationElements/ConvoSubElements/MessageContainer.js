@@ -1,5 +1,6 @@
 import { Stack, Box, useTheme, Typography } from "@mui/material";
 import BeatLoader from "react-spinners/BeatLoader";
+import { Check, Checks } from "phosphor-react";
 
 import getAvatar from "../../../../../utils/createAvatar";
 
@@ -11,6 +12,7 @@ const MessageContainer = ({
   msgType,
   isLastMessage,
   isTyping,
+  seen,
 }) => {
   const theme = useTheme();
 
@@ -33,6 +35,9 @@ const MessageContainer = ({
   }
 
   const commonPadding = msgType === "text" ? 1.5 : "3px 0px";
+
+  // read receipt shows on the last message of my own sequence (text/emoji only)
+  const showReceipt = me && isEndOfSequence && msgType !== "typing";
 
   return (
     <Stack
@@ -57,46 +62,70 @@ const MessageContainer = ({
           )}
         </Box>
       )}
-      <Box
-        p={commonPadding}
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: "max-content",
-          minWidth: 40,
-          maxWidth: { xs: "12em", md: "30em" },
-          minHeight: 40,
-          backgroundColor:
-            msgType === "text"
-              ? me
-                ? theme.palette.primary.main
-                : theme.palette.background.default
-              : msgType === "emoji"
-              ? ""
-              : theme.palette.background.default,
-          borderRadius: borderRadiusStyle,
-        }}
-      >
-        {msgType === "typing" && isTyping ? (
-          <BeatLoader
-            size={5}
-            height={0.5}
-            width={1}
-            color={theme.palette.primary.main}
-            speedMultiplier={0.5}
-            margin={2}
-          />
-        ) : (
-          <Typography
-            variant={msgType === "text" ? "body2" : "h3"}
-            color={me ? "#fff" : theme.palette.text}
-            sx={{ whiteSpace: "preserve", wordBreak: "break-word" }}
+      <Stack alignItems="flex-end" spacing={0.3}>
+        <Box
+          p={commonPadding}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "max-content",
+            minWidth: 40,
+            maxWidth: { xs: "12em", md: "30em" },
+            minHeight: 40,
+            backgroundColor:
+              msgType === "text"
+                ? me
+                  ? theme.palette.primary.main
+                  : theme.palette.background.default
+                : msgType === "emoji"
+                ? ""
+                : theme.palette.background.default,
+            borderRadius: borderRadiusStyle,
+          }}
+        >
+          {msgType === "typing" && isTyping ? (
+            <BeatLoader
+              size={5}
+              height={0.5}
+              width={1}
+              color={theme.palette.primary.main}
+              speedMultiplier={0.5}
+              margin={2}
+            />
+          ) : (
+            <Typography
+              variant={msgType === "text" ? "body2" : "h3"}
+              color={me ? "#fff" : theme.palette.text}
+              sx={{ whiteSpace: "preserve", wordBreak: "break-word" }}
+            >
+              {message.message}
+            </Typography>
+          )}
+        </Box>
+
+        {showReceipt && (
+          <Box
+            data-testid={seen ? "read-receipt-seen" : "read-receipt-sent"}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              pr: 0.5,
+              lineHeight: 0,
+            }}
           >
-            {message.message}
-          </Typography>
+            {seen ? (
+              <Checks
+                size={15}
+                weight="bold"
+                color={theme.palette.primary.main}
+              />
+            ) : (
+              <Check size={15} weight="bold" color="#919EAB" />
+            )}
+          </Box>
         )}
-      </Box>
+      </Stack>
       {me && isLastMessage && (
         <Box
           sx={{

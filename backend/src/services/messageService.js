@@ -96,3 +96,15 @@ export const getConvoMessages = async (convo_id) => {
 
   return messages;
 };
+
+// mark all messages in a conversation as read by a user (read receipts)
+export const markMessagesAsRead = async (convo_id, user_id) => {
+  await MessageModel.updateMany(
+    {
+      conversation: convo_id,
+      sender: { $ne: user_id },
+      readBy: { $ne: user_id },
+    },
+    { $addToSet: { readBy: user_id } }
+  );
+};

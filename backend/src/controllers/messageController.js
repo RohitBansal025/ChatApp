@@ -5,6 +5,7 @@ import {
   populateMessage,
   updateLatestMessage,
   validateFriendship,
+  markMessagesAsRead,
 } from "../services/messageService.js";
 import { validateMessageContent } from "../utils/messageValidation.js";
 import { ConversationModel } from "../models/index.js";
@@ -126,5 +127,30 @@ export const socketSendMessage = async (socket, user_id, messageData) => {
   } catch (error) {
     console.log(error);
     socket.errorHandler(error.message);
+  }
+};
+
+// -------------------------- Socket: Mark Messages As Read --------------------------
+export const socketMarkAsRead = async (socket, user_id, conversation_id) => {
+  try {
+    if (!conversation_id) return;
+
+    const convo = await ConversationModel.findById(conversation_id);
+    if (!convo) return;
+
+    // persist read state for the other participant's messages
+    await markMessagesAsRead(conversation_id, user_id);
+
+    // notify the other participant(s) so their sent-message ticks turn "seen"
+    convo.users.forEach((uid) => {
+      if (uid.toString() !== user_id.toString()) {
+        socket.to(uid.toString()).emit("messages_seen", {
+          conversation_id,
+          reader_id: user_id,
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error);
   }
 };

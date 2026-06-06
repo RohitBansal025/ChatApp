@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Box, useTheme, Stack } from "@mui/material";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import MessageContainer from "./ConvoSubElements/MessageContainer";
 import { scrollToBottom } from "../../../../utils/scrollToBottom";
+import { socket } from "../../../../utils/socket";
+import { updateMessagesSeen } from "../../../../redux/slices/chatSlice";
 
 const ConversationMain = () => {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
   const { messages, activeConversation, typingConversation } = useSelector(
     (state) => state.chat
@@ -15,6 +18,9 @@ const ConversationMain = () => {
 
   // Reference to the scrollable element
   const scrollContainerRef = useRef(null);
+
+  // the other participant in a 1-on-1 conversation (for read receipts)
+  const otherUser = activeConversation?.users?.find((u) => u._id !== user._id);
 
   // -------------- inner functions --------------
   // Function to check if the text only contains emojis
@@ -56,6 +62,27 @@ const ConversationMain = () => {
     }
   }, [messages, isTyping]);
 
+  // mark the other user's messages as read while viewing the conversation
+  useEffect(() => {
+    if (!activeConversation?._id || !user?._id) return;
+
+    const hasUnreadFromOthers = messages?.some(
+      (m) => m.sender._id !== user._id && !(m.readBy || []).includes(user._id)
+    );
+
+    if (hasUnreadFromOthers) {
+      socket.emit("mark_as_read", activeConversation._id);
+      // reflect locally so we don't keep re-emitting
+      dispatch(
+        updateMessagesSeen({
+          conversation_id: activeConversation._id,
+          reader_id: user._id,
+        })
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, activeConversation?._id, user._id]);
+
   return (
     <Box
       width="100%"
@@ -86,6 +113,11 @@ const ConversationMain = () => {
 
           const isLastMessage = messages[messages.length - 1] === e;
 
+          // a message is "seen" when the other participant has read it
+          const seen = otherUser
+            ? (e.readBy || []).includes(otherUser._id)
+            : false;
+
           return (
             <MessageContainer
               key={e._id}
@@ -95,6 +127,7 @@ const ConversationMain = () => {
               isEndOfSequence={isEndOfSequence}
               msgType={getMessageType(e.message)}
               isLastMessage={isLastMessage}
+              seen={seen}
             />
           );
         })}

@@ -17,6 +17,9 @@ const messageSchema = mongoose.Schema(
     conversation: { type: mongoose.Schema.ObjectId, ref: "Conversation" },
 
     files: [],
+
+    // Users who have read this message (used for read receipts).
+    readBy: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   },
   {
     timestamps: true,

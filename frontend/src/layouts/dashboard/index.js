@@ -11,6 +11,7 @@ import {
   setIsOptimistic,
   updateMsgConvo,
   updateTypingConvo,
+  updateMessagesSeen,
 } from "../../redux/slices/chatSlice";
 import { GetOnlineFriends } from "../../redux/slices/actions/userActions";
 import { GetConversations } from "../../redux/slices/actions/chatActions";
@@ -86,6 +87,11 @@ const DashboardLayout = () => {
         dispatch(updateTypingConvo(typingData));
       });
 
+      // read receipts: the other user has seen our messages
+      socket.on("messages_seen", (data) => {
+        dispatch(updateMessagesSeen(data));
+      });
+
       return () => {
         if (socket) {
           socket.off("connect_error");
@@ -94,6 +100,7 @@ const DashboardLayout = () => {
           socket.off("online_friends");
           socket.off("start_typing");
           socket.off("stop_typing");
+          socket.off("messages_seen");
         }
       };
     }

@@ -56,6 +56,27 @@ Backend-only, low-risk improvements (no frontend changes). All verified with tes
 - Decided to SKIP file-attachment encryption: the `files` array is always empty in this
   app (no in-chat attachments wired; uploads are avatar-only), so it was unused scope.
 
+## What's Implemented (2026-06-06 — read receipts)
+Direct (1-on-1) chats, 2-state ticks (✓ Sent gray → ✓✓ Seen blue), shown on the last
+message of each of your own sent sequences. Verified: backend logic tested + frontend
+production build compiles clean.
+Backend:
+- `messageModel.js`: added `readBy: [ObjectId ref User]`.
+- `messageService.js`: `markMessagesAsRead(convo_id, user_id)` ($addToSet, excludes sender,
+  idempotent).
+- `messageController.js`: `socketMarkAsRead()` persists read state + emits `messages_seen`
+  to the other participant's personal room.
+- `socket.js`: handlers `mark_as_read` and `join_conversation`.
+Frontend:
+- `chatSlice.js`: `updateMessagesSeen` reducer (+ export).
+- `layouts/dashboard/index.js`: listens for `messages_seen`.
+- `ConversationMain.js`: emits `mark_as_read` when viewing unread messages (and reflects
+  locally to avoid re-emits); computes `seen` per message from `readBy` vs other user.
+- `MessageContainer.js`: renders ✓ / ✓✓ ticks (phosphor-react Check/Checks) on last msg of
+  own sequence.
+Notes: old messages without `readBy` simply show as Sent. Repo has pre-existing clean-install
+peer-dep gaps (`emoji-mart`, `stylis`) unrelated to this work.
+
 ## Backlog / Future (P1/P2)
 - P1: One-time migration script to encrypt existing plaintext messages (user chose "new only").
 - P2: Encrypt media/file metadata or filenames if sensitive.

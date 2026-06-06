@@ -4,7 +4,10 @@ import mongoose from "mongoose";
 import { socketMiddleware } from "./src/middlewares/socketMiddleware.js";
 import { emitFriendStatus } from "./src/controllers/friendsController.js";
 import { joinConvo } from "./src/controllers/conversationController.js";
-import { socketSendMessage } from "./src/controllers/messageController.js";
+import {
+  socketSendMessage,
+  socketMarkAsRead,
+} from "./src/controllers/messageController.js";
 import { isRateLimited } from "./src/utils/socketRateLimiter.js";
 
 export const initializeSocket = (server) => {
@@ -58,6 +61,11 @@ export const initializeSocket = (server) => {
     });
     // ------------------------------------------------------
 
+    // ---------------Join Conversation Room---------------
+    socket.on("join_conversation", (conversation_id) => {
+      if (conversation_id) socket.join(conversation_id);
+    });
+
     // ---------------Send Message Hanling---------------
     socket.on("send_message", (message) => {
       try {
@@ -94,6 +102,11 @@ export const initializeSocket = (server) => {
       } catch (error) {
         socket.errorHandler("Error sending message");
       }
+    });
+
+    // ---------------Read Receipts---------------
+    socket.on("mark_as_read", (conversation_id) => {
+      socketMarkAsRead(socket, user_id, conversation_id);
     });
 
     // ---------------Typing Message Hanling---------------
